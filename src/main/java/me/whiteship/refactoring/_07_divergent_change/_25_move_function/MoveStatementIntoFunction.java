@@ -10,14 +10,12 @@ import java.util.List;
 public class MoveStatementIntoFunction {
 
 
-        public List<String> renderPerson(OutputStream outputStream, Person person){
-            List<String> result = new ArrayList<>();
-            result.add("<p>"+person.getName()+"</p>");
-            result.add(renderPhoto(person.getPhoto()));
-            result.add("<p>제목 : "+person.getPhoto().getTitle()+ "</p>"); //제목출력
-            result.add(emitPhotoData(person.getPhoto()));
-            result.add("\n");
-            return result;
+        public String renderPerson(OutputStream outputStream, Person person){
+
+            return "<p>"+person.getName()+"</p>"
+                    + renderPhoto(person.getPhoto())
+                    + "<p>제목 : "+person.getPhoto().getTitle() + "</p>"
+                    + emitPhotoData(person.getPhoto()) + "\n";
         }
 
     private String renderPhoto(Photo photo) {
