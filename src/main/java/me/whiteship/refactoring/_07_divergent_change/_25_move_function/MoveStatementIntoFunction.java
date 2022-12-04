@@ -18,34 +18,6 @@ public class MoveStatementIntoFunction {
                     + emitPhotoData(person.getPhoto()) + "\n";
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private String renderPhoto(Photo photo) {
             return null;
     }
