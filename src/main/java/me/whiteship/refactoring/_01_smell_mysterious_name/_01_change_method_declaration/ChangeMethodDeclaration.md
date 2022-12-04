@@ -89,4 +89,131 @@ public class ChangeMethodDeclaration{
     }
 }
 ```
+--- 
 
+### ✅ 예시 : 매개변수 추가하기
+
+📌 마이그레이션 절차
+
+```java
+public class BookReservation{
+        addReservation(String customer){
+            this.reservation.add(customer);
+        }
+}
+```
+⏬ 예약시 우선순위 큐를 지원하라는 새로운 요구사항 추가되었다.<br>
+⏬ 우선순위 큐에 넣을지 여부를 결정하는 매개변수를 추가가필요한 상황
+```java
+public class BookReservation{
+        addReservation(String customer){
+            this.reservation.add(customer);
+        }
+}
+```
+⏬ addReservation()의 본문을 새로운 함수로 추출한다.
+새로 추출한 함수 이름도 addReservation()이어야 하지만, 
+기존 함수와 이름이 같은 상태로 둘 수는 없으니 우선은 나중에 찾기 쉬운 임시 이름을 붙인다.
+```java
+public class BookReservation{
+        addReservation(String customer){
+            this.zzReservation.add(customer);
+        }
+        
+        zzReservation(String customer){
+            this.reservation.add(customer);
+        }
+}
+```
+⏬ 그런 다음 새 함수의 선언문과 호출문에 원하는 매개변수를 추가
+```java
+public class BookReservation{
+        addReservation(String customer){
+            this.zzReservation.add(customer, false);
+        }
+        
+        zzReservation(String customer,Boolean isPriority){
+            this.reservation.add(customer);
+        }
+}
+```
+⏬ 함수 인라인하기
+```java
+public class BookReservation{
+    addReservation(String customer,Boolean isPriority){
+            this.reservation.add(customer);
+        }
+}
+```
+
+---
+### ✅ 예시 : 매개변수를 속성으로 바꾸기
+
+```java
+import java.util.Arrays;
+
+public class inNewEngland {
+  public void inNewEngland(String aCustomer) {
+    String[] newEnglang = {'MA', 'CT', 'ME', 'VI', 'NH', 'RI'};
+    return Arrays.stream(newEnglang).anyMatch(aCustomer::equals);
+  }
+  
+  // 위에함수를 호출하는 코드
+  public void inNewEnglandger(String someCustomer){
+    String newEnglanders = someCustomer
+            .someCustomers.filer(c -> inNewEngland(c));    
+  }
+}
+
+```
+⏬ 이제 함수 추출하기로 새 함수를 만든다.
+
+```java
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+public class inNewEngland {
+
+  public void inNewEngland(String aCustomer) {
+    String stateCode = aCustomer.address.stats;
+    return xxNEWinNewEngland(stateCode);
+  }
+
+  public void xxNEWinNewEngland(String stateCode) {
+    return Arrays.stream({'MA', 'CT', 'ME', 'VI', 'NH', 'RI'}).anyMatch(stateCode::equals);
+  }
+
+  // 위에함수를 호출하는 코드
+  public void inNewEnglandger(String someCustomer) {
+    String newEnglanders = someCustomer
+            .someCustomers.filer(c -> inNewEngland(c));
+  }
+}
+```
+⏬ 변수로 추출해둔 입력 매개변수를 인라인하기
+```java
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+public class inNewEngland {
+
+  public void inNewEngland(String aCustomer) {
+    return xxNEWinNewEngland(aCustomer.address.stats);
+  }
+}
+
+```
+⏬ 기존함수의 본문을 호출문들에 집어넣는다
+```java
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+public class inNewEngland {
+
+  // 위에함수를 호출하는 코드
+  public void inNewEnglandger(String someCustomer) {
+    String newEnglanders = someCustomer
+            .someCustomers.filer(c -> x(inNewEnglandger(c.address.state)));
+  }
+}
+```
