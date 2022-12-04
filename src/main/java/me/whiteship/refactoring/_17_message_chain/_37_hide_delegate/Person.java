@@ -6,6 +6,8 @@ public class Person {
 
     private Department department;
 
+    private Photo photo;
+
     public Person(String name) {
         this.name = name;
     }
@@ -17,6 +19,8 @@ public class Person {
     public Department getDepartment() {
         return department;
     }
+
+    public Photo getPhoto(){ return photo;}
 
     public void setDepartment(Department department) {
         this.department = department;
