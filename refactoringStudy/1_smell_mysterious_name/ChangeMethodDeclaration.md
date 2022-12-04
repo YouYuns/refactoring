@@ -141,7 +141,7 @@ public class BookReservation{
 ```java
 public class BookReservation{
     addReservation(String customer,Boolean isPriority){
-            this.reservation.add(customer);
+            this.reservation.add(customer,isPriority);
         }
 }
 ```
