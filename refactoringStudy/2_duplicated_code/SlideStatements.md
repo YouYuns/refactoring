@@ -30,152 +30,41 @@
 ### ✅ 예시 : 조건문이 있을 때의 슬라이드
 
 ```java
-public class ExtractFunction {
-  public void printOwing(Invoice invoice){
-    Integer outstanding = 0;
-
-    System.out.println("-------------------------");
-    System.out.println("----------고객채무---------");
-    System.out.println("-------------------------");
-
-    //미해결 채무(outstanding)를 계산한다.
-    for (Order order : invoice.getOrders()) {
-      outstanding += order.amount;
+public class SlideStatements {
+  public Object slideStatements(){
+    Object result;
+    Stack availableResources= new Stack();
+    Stack allocatedResources = new Stack<>();
+    if(availableResources.size()==0){
+      result = createResource();
+      allocatedResources.push(result);
+    }else{
+      result = availableResources.pop();
+      allocatedResources.push(result);
     }
-
-    //마감일(dueDate)을 기록한다.
-    LocalDate today = LocalDate.now();
-    invoice.setDueDate(LocalDate.now());
-
-    //세부사항을 출력한다.
-    System.out.println("고객명 :" + invoice.getCustomer());
-    System.out.println("채무액 :" + outstanding);
-    System.out.println("마감일 :" + invoice.getDueDate().toString());
-
+    return result;
   }
 }
 ```
-⏬ 배너 및 디테일를 출력하는 코드를 추출하기
+⏬ 중복된 문장들을 조건문 밖으로 슬라이드
 ```java
-public class ExtractFunction{
-  public void printOwing(Invoice invoice){
-    Integer outstanding = 0;
-
-    printBanner();
-
-    //미해결 채무(outstanding)를 계산한다.
-    for (Order order : invoice.getOrders()) {
-      outstanding += order.amount;
+public class SlideStatements {
+  public Object slideStatements(){
+    Object result;
+    Stack availableResources= new Stack();
+    Stack allocatedResources = new Stack<>();
+    if(availableResources.size()==0){
+      result = createResource();
+    }else{
+      result = availableResources.pop();
     }
-
-    //마감일(dueDate)을 기록한다.
-    LocalDate today = LocalDate.now();
-    invoice.setDueDate(LocalDate.now());
-
-    printDetails(invoice, outstanding);
-
-  }
-
-  private static void printDetails(Invoice invoice, Integer outstanding) {
-    //세부사항을 출력한다.
-    System.out.println("고객명 :" + invoice.getCustomer());
-    System.out.println("채무액 :" + outstanding);
-    System.out.println("마감일 :" + invoice.getDueDate().toString());
-  }
-
-  private static void printBanner() {
-    System.out.println("-------------------------");
-    System.out.println("----------고객채무---------");
-    System.out.println("-------------------------");
+    allocatedResources.push(result);
+    return result;
   }
 }
 ```
 ---
 
-### ✅ 예시 : 지역 변수를 사용할 때
-
-```java
-public class ExtractFunction{
-  public void printOwing(Invoice invoice){
-    Integer outstanding = 0;
-    printBanner();
-    //미해결 채무(outstanding)를 계산한다.
-    for (Order order : invoice.getOrders()) {
-      outstanding += order.amount;
-    }
-    recordDueDate(invoice);
-    printDetails(invoice, outstanding);
-
-  }
-
-  private static void recordDueDate(Invoice invoice) {
-    //마감일(dueDate)을 기록한다.
-    LocalDate today = LocalDate.now();
-    invoice.setDueDate(today);
-  }
-
-  private static void printDetails(Invoice invoice, Integer outstanding) {
-    //세부사항을 출력한다.
-    System.out.println("고객명 :" + invoice.getCustomer());
-    System.out.println("채무액 :" + outstanding);
-    System.out.println("마감일 :" + invoice.getDueDate().toString());
-  }
-
-  private static void printBanner() {
-    System.out.println("-------------------------");
-    System.out.println("----------고객채무---------");
-    System.out.println("-------------------------");
-  }
-}
-```
----
-
-### ✅ 예시 : 지역 변수의 값을 변경할 떄
-
-```java
-public class ExtractFunction{
-  public void printOwing(Invoice invoice){
-    Integer outstanding = 0;
-    printBanner();
-    //미해결 채무(outstanding)를 계산한다.
-    for (Order order : invoice.getOrders()) {
-      outstanding += order.amount;
-    }
-    recordDueDate(invoice);
-    printDetails(invoice, outstanding);
-
-  }
-}
-```
-⏬ 앞 예시에서 수행한 리팩터링들은 모두 간단해서 단번에 처리했지만 이번에는 단계로 처리<br>
-⏬ 선언문을 변수가 사용되는 코드 근처로 슬라이드 한다.
-
-```java
-public class ExtractFunction{
-  public void printOwing(Invoice invoice){
-
-    printBanner();
-    Integer outstanding = calculateOutstanding(invoice);
-    recordDueDate(invoice);
-    printDetails(invoice, outstanding);
-
-  }
-
-  private static Integer calculateOutstanding(Invoice invoice) {
-    //미해결 채무(outstanding)를 계산한다.
-    Integer outstanding = 0;
-    for (Order order : invoice.getOrders()) {
-      outstanding += order.amount;
-    }
-    return outstanding;
-  }
-}
-```
---- 
-✏️ 값을 반환할 변수가 여러 개라면?
-- 함수가 값 하나만 반환하는 방식을 선호하기 때문에 각각을 반환하는 함수 여러 개로 만든다.
-- 여기서는 임시 변수를 질의 함수로 바꾸거나 변수를 쪼개는 식으로 처리하면 좋다.
-
-✏️이렇게 추출한 함수를 최상위 수준 같은 다른 문맥으로 이동하려면 어떻게 해야할까?
-- 먼저 중첩 함수로 추출하고 나서 새로운 문맥으로 옮긴다.
-- 중첩함수로 추출할 수 있더라도 최소한 원본 함수와 같은 수준의 문맥으로 먼저 추출해보자
+✏️Slide Statements의 목적
+- 관련 있는 코드끼리 가까이 둬서 이해하기 더 쉽게하기 위해서이다 
+- 다른 리팩토링을 하기 위한 전처리 작업으로 사용되는 코드이고 중복코드를 찾아서 만들도록 하는 작업이다.
