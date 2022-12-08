@@ -25,71 +25,42 @@
 ### ✅ 예시
 
 ```java
+import java.time.LocalDate;
+
 public class IntroduceParameterObject {
-    public Stream<Temp> readingsOutsideRange(Station station, Integer min, Integer max){
-        return station.readings.stream().filter(r-> r.temp < min || r.temp > max);
-    }
+    public void amountInvoiced(LocalDate startDate, LocalDate endDate) {
+    };
+    public void amountReceived(LocalDate startDate, LocalDate endDate) {
+    };
+    public void amountOverdue(LocalDate startDate, LocalDate endDate) {
+    };
 }
 ```
-⏬ 이 함수는 다음과 같이 호출할수 있다.
+⏬ 매개변수를 객체형태로 만들어서 매개변수를 줄인다.
 ```java
 
-public class Order {
-    Double quantity;
-    Item item;
-
-    public Order(Double quantity, Item item) {
-        this.quantity = quantity;
-        this.item = item;
-    }
-
-    public Double getPrice(){
-        Double basePrice = this.getBasePrice();
-        Double discountFactor = 0.98d;
-
-        if(basePrice > 1000) discountFactor -= 0.03;
-        return basePrice * discountFactor;
-    }
-
-    private Double getBasePrice() {
-        return this.quantity * this.item.price;
-    }
+public class IntroduceParameterObject {
+    public void amountInvoiced(DateRange dateRange) {
+    };
+    public void amountReceived(DateRange dateRange) {
+    };
+    public void amountOverdue(DateRange dateRange) {
+    };
 }
 ```
-⏬ 인라인한다.
-```java
-   public Double getPrice(){
-        Double discountFactor = 0.98d;
 
-        if(this.getBasePrice() > 1000) discountFactor -= 0.03;
-        return this.getBasePrice() * discountFactor;
-    }
-
-```
-⏬ discountFactor변수도 같은 순서로 처리한다.
-
-```java
-    public Double getPrice(){
-        return this.getBasePrice() * this.getDiscountFactor();
-    }
-
-    private Double getDiscountFactor() {
-        Double discountFactor = 0.98d;
-        if(this.getBasePrice() > 1000) discountFactor -= 0.03;
-        return discountFactor;
-    }
-
-    private Double getBasePrice() {
-        return this.quantity * this.item.price;
-    }
-```
 ---
 
-✏️ 정리
-- 임시변수를 만드는것도 하나의 리팩토링이다.
+✏️ 진정한 값 객체로 거듭나기
+- 매개변수 그룹을 객체로 교체하는 일은 진짜 값진 작업의 준비 단계일 뿐이다.
 ####
-- 하지만 거기서 더 나가가 그 표현식 자체가 여러번 반복된다던가 <br>
-  그리고 긴 메서드를 리팩토링 할떄 추출해내는 매개변수가 많아질때 그 매개변수를 전달하는게 아니라 <br>
-  뺴내는 메서드 내부에서 호출하도록 바꾸면 매개변수를 줄일수 있다.
+- 앞에서처럼 클래스로 만들어두면 관련 동작들을 이 클래스로 옮길 수 있다는 이점이 생긴다.
 ####
-- 이 리팩토링은 Extracting Function 별반 다를게 없다
+```java
+public class IntroduceParameterObject{
+    public void readingsOutsideRange(Station station, String range){
+        return station.reading.filter(r->!range.contains(r.temp));
+    }
+}
+```
+- 진정한 값 객체로 만들기 위해 값에 기반 한 동치성 검사 메서드부터 추가할 것이다.ㄴ
