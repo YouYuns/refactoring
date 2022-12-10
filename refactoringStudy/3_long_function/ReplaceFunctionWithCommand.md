@@ -16,114 +16,135 @@
 
 ---
 ### ✅ 절차
-1. 매개변수들을 원하는 형태로 받는 빈 함수를 만든다.
-    - 마지막 단계에서 이 함수의 이름을 변경해야 하니 검색하기 쉬운 이름으로 지어준다.
-2. 새 함수의 본문에서는 원래 함수를 호출하도록 하며, 새 매개변수와 원래 함수의 매개변수를 매핑한다.
-3. 정적 검사를 수행한다.
-4. 모든 호출자가 새 함수를 사용하게 수정한다. 하나씩 수정하며 테스트
-    - 수정 후에는 원래의 매개변수를 만들어내는 코드 일부가 필요 없어질 수 있다. 따라서 죽은 코드제거하기로 없앨 수 있을 것이다.
-5. 호출자를 모두 수정했다면 원래 함수를 인라인한다.
-6. 새 함수의 이름을 적절히 수정하고 모든 호출자에 반영한다.
+1. 대상 함수의 기능을 옮길 빈 클래스를 만든다. 클래스 이름은 함수 이름에 기초해 짓는다.
+2. 방금 생성한 빈 클래스로 함수를 옮긴다.
+    - 리팩터링이 끝날 때까지는 원래 함수를 전달 함수 역할로 남겨두자.
+    - 명령 관련 이름은 사용하는 프로그래밍 언어의 명명규칙을 따른다.
+    - 규칙이 딱히 없다면 "execute"나 "call" 같이 명령이ㅡ 실행 함수에 흔히 쓰이는 이름을 택하자
+3. 함수의 인수들 각각은 명령의 필드로 만들어 생성자를 통해 설정할지 고민해본다.
+---
+✏ 명령이란?
+- 평범한 함수 메커니즘 보다 훨씬 유연하게 함수를 제어하고 표현할 수 있다.
+- 되돌리기 undo같은 보조연산을 제공할 수 있으면 수명주기를 더 정밀하게 제어하는데 필요한 매개변수를 만들어주는 메서드도 제공할 수 있다.
+- 상속과 훅hook을 이용해 사용자 맞춤형으로 만들 수도 있다.
 ---
 ### ✅ 예시
-✔️실내온도 모니터링 시스템을 생각해보자. 이 시스템은 일일 최저 최고 기온이 난방 계획에서 정한 범위를 벗어나는지 확인한다.
+✔건가보험 애플리케이션에서 사용하는 점수 계산 함수
 ```java
-import java.time.LocalDate;
+public class ReplaceFunctionWithCommand {
+    public class MedicalExam{
+        Boolean isSmoker;
+    }
 
-public class PreserveWholeObject {
+    public class Candiate{
+        Boolean originState;
+    }
 
-    Room room = new Room();
-
-    Integer low = room.daysTempRange.low;
-    Integer high = room.daysTempRange.high;
-    
-    //호출자
-    public void Caller(){
-        if(!withinRange(low, high)){
-            System.out.println("방 온도가 지정 범위를 벗어났습니다.");
+    public class ScoringGuide{
+        public Boolean stateWithLowCertification(Boolean state){
+            return state;
         }
     }
-    //Heating클래스
-    TeamperatureRange teamperatureRange = new TeamperatureRange();
-    public Boolean withinRange(Integer bottom, Integer top){
-        return (bottom >= this.teamperatureRange.low) && (top <= this.teamperatureRange.high);
+
+    public Integer score(Candiate candidate, MedicalExam medicalExam, ScoringGuide scoringGuide){
+        Integer result = 0;
+        Integer healthLevel = 0;
+        Boolean highMedicalRiskFlag = false;
+
+        if(medicalExam.isSmoker){
+            healthLevel += 10;
+            highMedicalRiskFlag = true;
+        }
+
+        String certificationGrade = "regular";
+        if (scoringGuide.stateWithLowCertification(candidate.originState)) {
+            certificationGrade = "low";
+            result -= 5;
+        }
+
+        //비슷한 코드가 한참 이어짐
+        result -= Math.max(healthLevel - 5, 0);
+        return result;
     }
 }
 ```
-⏬ 최저 최고 기온을 뽑아내서 인수로 건네는 대신 범위 객체를 통째로 건넬 수도 있다.<br>
-⏬ 가장 먼저 원하는 인터페이스를 갖춘 빈 메서드를 만든다.
+⏬ 시작은 빈 클래스를 만들고 이 함수를 그 클래스로 옮기는 일부터다
 ```java
 
-public class PreserveWholeObject {
-    public void xxNEWwithinRange(NumberRange numberRange){
+public class ReplaceFunctionWithCommand {
+    public Integer score(Candiate candidate, MedicalExam medicalExam, ScoringGuide scoringGuide){
+        return  new Scorer().execute(candidate, medicalExam, scoringGuide);
     }
-}
-```
-⏬ 본문은 기존 withRange()를 호출하는 코드로 채운다. 자연스럽게 새 매개변수를 기존 매개변수와 매핑하는 로직이 만들어진다.
+    public class Scorer{
+        public Integer execute(Candiate candiate, MedicalExam medicalExam, ScoringGuide scoringGuide){
+            Integer result = 0;
+            Integer healthLevel = 0;
+            Boolean highMedicalRiskFlag = false;
 
-```java
-public class PreserveWholeObject {
-    public Boolean xxNEWwithinRange(NumberRange numberRange){
-        return this.withinRange(numberRange.low, numberRange.high);
-    }
-}
-```
-⏬ 기존 함수를 호출하는 코드를 찾아서 새 함수를 호출하게 수정
+            if(medicalExam.isSmoker){
+                healthLevel += 10;
+                highMedicalRiskFlag = true;
+            }
 
-```java
-public class PreserveWholeObject {
-    public void 호출자() {
-        if (!xxNEWwithinRange(room.daysTempRange)) {
-            System.out.println("방 온도가 지정 범위를 벗어났습니다.");
+            String certificationGrade = "regular";
+            if (scoringGuide.stateWithLowCertification(candiate.originState)) {
+                certificationGrade = "low";
+                result -= 5;
+            }
+
+            //비슷한 코드가 한참 이어짐
+            result -= Math.max(healthLevel - 5, 0);
+            return result;
         }
     }
+
 }
 ```
+⏬ 명령이 받는 인수들을 생성자로 옮겨서 execute()메서드는 매개변수를 받지않게 한다
 
-⏬ 모두 새함수로 대체하고 모두 반영한다.
 ```java
-public class PreserveWholeObject {
-    public Boolean withinRange(DaysTempRange numberRange) {
-        return (numberRange.low >= this.teamperatureRange.low) && (numberRange.high <= this.teamperatureRange.high);
+public class ReplaceFunctionWithCommand {
+    public Integer score(Candiate candidate, MedicalExam medicalExam, ScoringGuide scoringGuide){
+        return  new Scorer(candidate, medicalExam, scoringGuide).execute();
+    }
+    public class Scorer{
+        Candiate candiate;
+        MedicalExam medicalExam;
+        ScoringGuide scoringGuide;
+
+        public Scorer(Candiate candiate, MedicalExam medicalExam, ScoringGuide scoringGuide) {
+            this.candiate = candiate;
+            this.medicalExam = medicalExam;
+            this.scoringGuide = scoringGuide;
+        }
+
+        public Integer execute(){
+            Integer result = 0;
+            Integer healthLevel = 0;
+            Boolean highMedicalRiskFlag = false;
+
+            if(this.medicalExam.isSmoker){
+                healthLevel += 10;
+                highMedicalRiskFlag = true;
+            }
+
+            String certificationGrade = "regular";
+            if (this.scoringGuide.stateWithLowCertification(this.candiate.originState)) {
+                certificationGrade = "low";
+                result -= 5;
+            }
+
+            //비슷한 코드가 한참 이어짐
+            result -= Math.max(healthLevel - 5, 0);
+            return result;
+        }
     }
 }
 ```
 ---
-### ✅ 예시 : 새 함수를 다른 방식으로 만들기
-✔ 코드 작성 없이 순전히 다른 리팩터링들을 연달아 수행하여 새 메서드를 만들어 내는 방법이다.
-✔ 메서드를 추출하는 방식으로 새 메서드를 만들려한다.
-```java
-public class PreserveWholeObject{
-    DaysTempRange tempRange = room.daysTempRange;
-    Integer low = tempRange.low;
-    Integer high = tempRange.high;
-    Boolean isWithinRange = withinRange(low, high);
-    public void 호출자(){
-        if(!isWithinRange){
-            System.out.println("방 온도가 지정 범위를 벗어났습니다.");
-        }
-    }
-}
-```
-⏬ 함수추출하기로 새 메서드를 만들수 있다.
-```java
-public class PreserveWholeObject{
-    Boolean isWithinRange = withinRange(tempRange);
-    public void 호출자(){
-        if(!isWithinRange){
-            System.out.println("방 온도가 지정 범위를 벗어났습니다.");
-        }
-    }
-}
-```
----
 
-✏️정리
-- 메서드를 넘기는 파라미터가 있는경우 특히 여러 파라미터가 있는 경우 <br>
-  그 파라미터를 하나의 오브젝트에서 파생된 값들이 종종있는데 <br>
-  각각을 넘기지 않고 하나의 오브젝트 타입을 넘김으로써 파라미터 갯수를 줄이는 기법이다.
-####
-- 마치 IntroduceParameterObject와 굉장히 비슷하다 <br>
-  IntroduceParameterObject는 아예 파라미터의 파생되어 온 클래스가 아예없을때<br> 그거를 만들면서 자연스럽게 PreserveWholeObject까지 적용이 된다
-####
-- PreserverWholeObject는 그러한 타입이 이미 있는경우에 적용하는 기술이다.
+✏ ️정리
+- 커맨드 패턴 디자인 패턴중 하나인데 함수 하나를 독립적인 커맨드로 분리하게 되면 긴 메서드를 간추리기도 좋고<br>
+  하나의 커맨드로 분리를 한 오퍼레이션 자체를 커맨드 역할을 하는 여러 메서드나 필드를 사용해서 잘게 분해하면서 코드를 간추릴수 있따.
+- 단점은 그만큼 새로운 클래스나 구조가 변경이 되기 때문에 복잡도가 증가한다. 그만큼 장점도 있기 떄문에 고려한다.
+- 먼저 함수분리하기를 고려하고 함수분리하기를 고려해도 이 코드의 위치가 여기가 아니거나 다른 곳에 있어야될꺼같으면 커맨드 패턴 별도의 클래스로 분리하는게 좋다.
