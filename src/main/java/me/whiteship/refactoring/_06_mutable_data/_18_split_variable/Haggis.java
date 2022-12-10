@@ -16,15 +16,17 @@ public class Haggis {
 
     public double distanceTravelled(int time) {
         double result;
-        double acc = primaryForce / mass;
+        //아래 acc와 중복으로 사용되어서 명칭을 고친다.
+        double primayAcceleration = primaryForce / mass;
         int primaryTime = Math.min(time, delay);
-        result = 0.5 * acc * primaryTime * primaryTime;
+        result = 0.5 * primayAcceleration * primaryTime * primaryTime;
 
         int secondaryTime = time - delay;
         if (secondaryTime > 0) {
-            double primaryVelocity = acc * delay;
-            acc = (primaryForce + secondaryForce) / mass;
-            result += primaryVelocity * secondaryTime + 0.5 * acc * secondaryTime + secondaryTime;
+            double primaryVelocity = primayAcceleration * delay;
+            //두번쨰 가속도이니 여기는 다른 명칭으로 고친다.
+            double secondaryAcceleration = (primaryForce + secondaryForce) / mass;
+            result += primaryVelocity * secondaryTime + 0.5 * secondaryAcceleration * secondaryTime + secondaryTime;
         }
 
         return result;
