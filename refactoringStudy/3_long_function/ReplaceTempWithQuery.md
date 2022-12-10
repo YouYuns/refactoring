@@ -69,30 +69,34 @@ public class Order {
 ```
 ⏬ 인라인한다.
 ```java
-   public Double getPrice(){
+public class Order {
+    public Double getPrice() {
         Double discountFactor = 0.98d;
 
-        if(this.getBasePrice() > 1000) discountFactor -= 0.03;
+        if (this.getBasePrice() > 1000) discountFactor -= 0.03;
         return this.getBasePrice() * discountFactor;
     }
+}
 
 ```
 ⏬ discountFactor변수도 같은 순서로 처리한다.
 
 ```java
-    public Double getPrice(){
+public class Order {
+    public Double getPrice() {
         return this.getBasePrice() * this.getDiscountFactor();
     }
 
     private Double getDiscountFactor() {
         Double discountFactor = 0.98d;
-        if(this.getBasePrice() > 1000) discountFactor -= 0.03;
+        if (this.getBasePrice() > 1000) discountFactor -= 0.03;
         return discountFactor;
     }
 
     private Double getBasePrice() {
         return this.quantity * this.item.price;
     }
+}
 ```
 ---
 
