@@ -6,12 +6,7 @@ public class Shipment {
 
     public LocalDate deliveryDate(Order order, boolean isRush) {
         if (isRush) {
-            int deliveryTime = switch (order.getDeliveryState()) {
-                case "WA", "CA", "OR" -> 1;
-                case "TX", "NY", "FL" -> 2;
-                default -> 3;
-            };
-            return order.getPlacedOn().plusDays(deliveryTime);
+            return regularDeliveryDate(order);
         } else {
             int deliveryTime = switch (order.getDeliveryState()) {
                 case "WA", "CA" -> 2;
@@ -20,5 +15,14 @@ public class Shipment {
             };
             return order.getPlacedOn().plusDays(deliveryTime);
         }
+    }
+
+    private static LocalDate regularDeliveryDate(Order order) {
+        int deliveryTime = switch (order.getDeliveryState()) {
+            case "WA", "CA", "OR" -> 1;
+            case "TX", "NY", "FL" -> 2;
+            default -> 3;
+        };
+        return order.getPlacedOn().plusDays(deliveryTime);
     }
 }
