@@ -9,82 +9,85 @@
   만들고 세터를 제거해서 변경될 수 있는 가능성을 제거해야 한다
 ---
 ### ✅ 절차
-1. 대상 함수를 복제하고 질의 목적에 충실한 이름을 짓는다.
-   - 함수 내부를 살펴 무엇을 반환하는지 찾는다. 어떤 변수의 값을 반환한다면 그 변수 이름이 훌륭한 단초가 될 것이다.
-2. 새 질의 함수에서 부수효과를 모두 제거한다.
-3. 정적 검사를 수행한다.
-4. 원래 함수(변경 함수)를 호출하는 곳을 모두 찾아낸다. 호출하는 곳에서 반환 값을 사용한다면 질의 함수를 호출하도록 바꾸고,<br>
-   원래 함수를 호출하는 코드를 바로 아래 줄에 새로 추가한다. 하나 수정할 떄마다 테스트
-5. 원래 함수에서 질의 관련 코드를 제거한다.
-6. 테스트
+1. 설정해야 할 값을 생성자에서 받지 않는다면 그 값을 받을 매개변수를 생성자에 추가한다(함수 선언 바꾸기). 그런 다음 생성자 안에서 적절한 세터를 호출한다.
+    - 세터 여러 개를 제거하려면 해당 값 모두를 한꺼번에 생성자에 추가한다. 그러면 이후 과정이 간소해진다.
+2. 생성자 밖에서 세터를 호출하는 곳을 찾아 제거하고, 대신 새로운 생성자를 사용하도록 한다. 하나 수정할 때마다 테스트한다.
+    - (갱신하려는 대상이 공유 참조 객체라서) 새로운 객체를 생성하는 방식으로는 세터 호출을 대체할 수 없다면 이 리팩터링을 취소
+3. 세터 메서드를 인라인한다. 가능하다면 해당 필드를 불변으로 만든다.
+4. 테스트
 ---
 ### ✅ 예시
-✔️범죄자를 찾으면 그 사람의 이름을 반환하고 경고를 울린다.
+✔️간단한 사람 클래스 
 ```java
-public class Criminal {
+public class Person {
 
-    public String alertForMiscreant(List<Person> people) {
-        for (Person p : people) {
-            if (p.getName().equals("Don")) {
-                setOffAlarms();
-                return "Don";
-            }
+    private String name;
 
-            if (p.getName().equals("John")) {
-                setOffAlarms();
-                return "John";
-            }
-        }
+    private int id;
 
-        return "";
+    public String getName() {
+        return name;
     }
 
-    private void setOffAlarms() {
-        System.out.println("set off alarm");
+    public void setName(String name) {
+        this.name = name;
     }
-}
 
-```
-⏬ 함수를 복제하고 질의 목적에 맞는 이름짓고 새 질의 함수에서 부수효과를 낳는 부분을 제거한다.
-```java
-public class Criminal {
-    public String findMiscreant(List<Person> people) {
-        for (Person p : people) {
-            if (p.getName().equals("Don")) {
-                return "Don";
-            }
-            if (p.getName().equals("John")) {
-                return "John";
-            }
-        }
-        return "";
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
 
+
 ```
-⏬ 이제 원래 함수를 호출하는 곳을 찾아서 새로운 질의 함수를 호출하도록 바꾸고<br>
-    이어서 원래의 변경 함수를 호출하는 코드를 바로 아래 삽입
+⏬ 아이디는 생성자에서 id를 받오록한다. 최초 한번은 id를 설정 할 수 있어야 하므로
 ```java
-public class Criminal {
-    String found = criminal.findMiscreant(List.of(new Person("Keesun"), new Person("Don")));
-    alertForMiscreant();
-}
-```
-⏬ 알고리즘 교체하기 (더 가다듬기)<br>
-✔️findMiscreant와 alertForMiscreant에 각각 똑같은 반복문이 2개가 돌아서 해상 메서드를 호출하면 반복문을 한번만 돌게 할수 있다.
-```java
-public class Criminal{
-    public void alertForMiscreant(List<Person> people) {
-        if(!findMiscreant(people).isBlank()) {
-            setOffAlarms();
-        }
+public class Person {
+    private String name;
+
+    private int id;
+
+    public Person(int id) {
+        this.id = id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+//    public void setId(int id) {
+//        this.id = id;
+//    }
+}
+
+```
+⏬ 이렇게 하면 아이디는 세터를 통해서 변경 못한다.
+```java
+public class Test {
+    void person() {
+        Person person = new Person(10);
+//        person.setId(10);
+        person.setName("keesun");
+        assertEquals(10, person.getId());
+        assertEquals("keesun", person.getName());
+        person.setName("whiteship");
+        assertEquals("whiteship", person.getName());
+    }
 }
 ```
 ---
 ✏️정리
-- 값을 조회하는 함수들이 있고 값을 변경하는 함수들이 있는데 이 함수를 구분해서 만들자
-- Command Separte규칙이라고하는데 어떤 값을 리턴 하는 함수는 즉 값을 조회하는 함수는 사이드 이펙트가 없어야한다.
-- 이 책에서는 눈에 띌만한 (Obersavble) 사이드 이펙트만 분리해야된다고 한다 <br>
-  하지만 캐시같은 경우 자주 조회하는 경우 캐시에 담아두기도 하는데 캐시는 분리하지 않아도된다. 눈에 띌만한 사이트이펙트는 아니다.
+- 세터를 통해서 언제든지 필드를 변경할 수 있다는 뜻이다 
+- 필드를 변경되지않게 되기를 원한다면 해당 필드값은 생성자를 통해서 넘겨주고 세터는 제거해야한다.
