@@ -13,126 +13,99 @@
   데이터기 때문에 해당 변수는 그대로 유지할 수 있다
 ---
 ### ✅ 절차
-1. 변수 값이 갱신되는 지점을 모두 찾는다. 필요하면 변수 쪼개기를 활용해 각 갱신 지점에서 변수를 분리한다.
-2. 해당 변수의 값을 계산해주는 함수를 만든다.
-3. 해당 변수가 사용되는 모든 곳에 어서션을 추가하여 함수의 계산 결과가 변수의 값과 같은지 확인한다.
-   - 필요하면 변수 캡슐화하기를 적용하여 어서션이 들어갈 장소를 마련해준다.
-4. 테스트
-5. 변수를 읽는 코드를 모두 함수 호출로 대체한다.
-6. 테스트
-7. 변수를 선언하고 갱신하는 코드를 죽은 코드 제거하기로 없앤다.
+1. 변환할 레코드를 입력받아서 값을 그대로 반환하는 변환 함수를 만든다.
+   - 이 작업은 대체로 깊은 복사로 처리해야 한다. 변환 함수가 원본 레코드를 바꾸지 않는지 검사하는 테스트를 마련해두면 도움될 때가 많다.
+2. 묶을 함수 중 함수 하나를 골라서 본문 코드를 변환 함수로 옮기고, 처리 결과를 레코드에 새 필드로 기록한다.<br>
+   그런 다음 클라이언트 코드가 이 필드를 사용하도록 수정한다.
+    - 로직이 복잡하면 함수 추출하기부터 한다.
+3. 테스트
+4. 나머지 관련 함수도 위 과정에 따라 처리한다.
 ---
 ### ✅ 예시
-✔️
+✔️매달 사용자가 마신 차의 양을 측정Reading 하는 코드
 ```java
-public class Discount {
-    //파생된 값이다 discountedTotal은 기존의 discount과 baseTotal데이터로부터 계산되어온 값
-    private double discountedTotal;
-    private double discount;
-
-    private double baseTotal;
-
-    public Discount(double baseTotal) {
-        this.baseTotal = baseTotal;
-    }
-
-    public double getDiscountedTotal() {
-        return this.discountedTotal;
-    }
-
-    public void setDiscount(double number) {
-        this.discount = number;
-        this.discountedTotal = this.baseTotal - this.discount;
-    }
+public class ReadingDTO {
+    String customer;
+    double quantity;
+    Month month;
+    Year year;
 }
 
-```
-⏬ getDiscountedTotal은 결국 baseTotal - disscount이므로 바로 안쪽으로 인라인한다
-```java
-public class Discount {
-    //파생된 값이다 discountedTotal은 기존의 discount과 baseTotal데이터로부터 계산되어온 값
-//    private double discountedTotal;
-    private double discount;
+//세금을 부과할 소비량을 계산하는 코드
+public class Client1 {
 
-    private double baseTotal;
+    double baseCharge;
 
-    public Discount(double baseTotal) {
-        this.baseTotal = baseTotal;
+    public Client1(ReadingDTO dto) {
+        this.baseCharge = baseRate(dto.month, dto.year) * dto.quantity;
     }
 
-    public double getDiscountedTotal() {
-        return this.baseTotal - this.discount;
+    private double baseRate(Month month, Year year) {
+        return 10;
     }
 
-    public void setDiscount(double number) {
-        this.discount = number;
-//        this.discountedTotal = this.baseTotal - this.discount;
-    }
-}
-
-```
-### ✅ 예시 : 소스가 둘 이상일 때
-✔️adjustmenets에 들어오는 합계를 구하는 코드
-```java
-public class ProductionPlan {
-    //production이란느 값은 adjustment의 총합계이므로 미리 계산해서 변수에 담아둘 필요가없어서 derived variable이다
-    
-    private double production;
-    private List<Double> adjustments = new ArrayList<>();
-
-    public void applyAdjustment(double adjustment) {
-        this.adjustments.add(adjustment);
-        //아래처럼 미리 계산할 필요가없음
-        this.production += adjustment;
-    }
-
-    public double getProduction() {
-        return this.production;
+    public double getBaseCharge() {
+        return baseCharge;
     }
 }
 ```
-⏬ 합계를 구하는 메서드를 만들고 그 메서드를 바로 리턴하게 만든다 getProduction
+⏬ 코드에는 이와 같은 계산 코드가 여러 곳에 반복된다
 ```java
-public class ProductionPlan {
+public class ReadingDTO {
+    public class Client2 {
 
-    private double production;
-    private List<Double> adjustments = new ArrayList<>();
+        private double base;
+        private double taxableCharge;
 
-    public void applyAdjustment(double adjustment) {
-        this.adjustments.add(adjustment);
-//        this.production += adjustment;
-    }
+        public Client2(ReadingDTO reading) {
+            this.base = baseRate(reading.month, reading.year) * reading.quantity;
+            this.taxableCharge = Math.max(0, this.base - taxThreshold(reading.year));
+        }
 
-    public double getProduction() {
-    //calculatedProduction 메서드를 인라인한게 아래다
-//        assert this.production == this.adjustments.stream().mapToDouble(Double::valueOf).sum();
-        return this.adjustments.stream().mapToDouble(Double::valueOf).sum();
-    }
+        private double taxThreshold(Year year) {
+            return 5;
+        }
 
-//    private double calculatedProduction(){
-//        합계를 구하는 여러가지 방법이 있다 1번쨰 방법 reduce사용하기 2개의 값이 들어가서 하나의 값으로 0은 초기값이다.
-//        위에껄 더 줄이면
-//        return this.adjustments.stream().reduce((double)0, Double::sum);
-//
-//        두번째 방법
-//        return this.adjustments.stream().mapToDouble(Double::valueOf).sum();
-}
+        private double baseRate(Month month, Year year) {
+            return 10;
+        }
 
-```
-⏬ 이렇게하면 production 변수를 제거할수 있게된다. 합계구할때 합계구하는 메서드 호출하면된다
-```java
-public class ProductionPlan {
+        public double getBase() {
+            return base;
+        }
 
-    private List<Double> adjustments = new ArrayList<>();
-
-    public void applyAdjustment(double adjustment) {
-        this.adjustments.add(adjustment);
-    }
-    public double getProduction() {
-        return this.adjustments.stream().mapToDouble(Double::valueOf).sum();
+        public double getTaxableCharge() {
+            return taxableCharge;
+        }
     }
 }
 ```
+⏬ 중복 코드라면 함수추출하기로 처리할 수도 있지만 추출한 함수들이 프로그램 곳곳에 흩어져서 나중에 그런 함수가<br>
+있는지 조차 모르게 될 가능성이 있다.
+
+```java
+public class Client3 {
+
+    private double basicChargeAmount;
+
+    public Client3(ReadingDTO reading) {
+        this.basicChargeAmount = calculateBaseCharge(reading);
+    }
+    //아래처럼 만들어 놓고 까먹을수 이따 메서드를
+    private double calculateBaseCharge(ReadingDTO reading) {
+        return baseRate(reading.month, reading.year) * reading.quantity;
+    }
+
+    private double baseRate(Month month, Year year) {
+        return 10;
+    }
+    public double getBasicChargeAmount() {
+        return basicChargeAmount;
+    }
+}
+```
+⏬ 이거를 해결하는 방법으로 다양한 파생 정보 계산 로직을 모두 하나의 변환 단계로 모을 수 있다
+
 ---
 ✏️정리
 - Derived Variable는 어디선가 계산되거나 파생된 변수라고 생각하면된다.

@@ -30,3 +30,29 @@ import java.time.Year;
 //        return taxableCharge;
 //    }
 //}
+public class Client2 {
+
+    private double base;
+    private double taxableCharge;
+
+    public Client2(ReadingDTO reading) {
+        this.base = baseRate(reading.month, reading.year) * reading.quantity;
+        this.taxableCharge = Math.max(0, this.base - taxThreshold(reading.year));
+    }
+
+    private double taxThreshold(Year year) {
+        return 5;
+    }
+
+    private double baseRate(Month month, Year year) {
+        return 10;
+    }
+
+    public double getBase() {
+        return base;
+    }
+
+    public double getTaxableCharge() {
+        return taxableCharge;
+    }
+}

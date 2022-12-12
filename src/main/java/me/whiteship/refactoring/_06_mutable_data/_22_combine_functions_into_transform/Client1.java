@@ -21,3 +21,19 @@ import java.time.Year;
 //        return baseCharge;
 //    }
 //}
+public class Client1 {
+
+    double baseCharge;
+
+    public Client1(ReadingDTO dto) {
+        this.baseCharge = baseRate(dto.month, dto.year) * dto.quantity;
+    }
+
+    private double baseRate(Month month, Year year) {
+        return 10;
+    }
+
+    public double getBaseCharge() {
+        return baseCharge;
+    }
+}
