@@ -8,4 +8,7 @@ public class ReadingDTO {
     double quantity;
     Month month;
     Year year;
+
+    public ReadingDTO(ReadingDTO readingDTO) {
+    }
 }

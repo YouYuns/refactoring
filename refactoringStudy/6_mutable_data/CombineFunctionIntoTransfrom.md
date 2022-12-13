@@ -105,7 +105,20 @@ public class Client3 {
 }
 ```
 ⏬ 이거를 해결하는 방법으로 다양한 파생 정보 계산 로직을 모두 하나의 변환 단계로 모을 수 있다
+```java
+public class Client3 extends ReadingClient {
 
+    private double basicChargeAmount;
+
+    public Client3(ReadingDTO reading) {
+        this.basicChargeAmount = enrichReading(reading).baseCharge;
+    }
+
+    public double getBasicChargeAmount() {
+        return basicChargeAmount;
+    }
+}
+```
 ---
 ✏️정리
 - 관련있는 여러 파생 변수들을 만들어내는 함수가 여러곳에서 사용되는 경우에 그 파생변수를 변환함수를 통해서 한곳으로 가져오는 방법

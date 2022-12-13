@@ -24,21 +24,15 @@ import java.time.Year;
 //        return basicChargeAmount;
 //    }
 //}
-public class Client3 {
+public class Client3 extends ReadingClient {
 
     private double basicChargeAmount;
 
     public Client3(ReadingDTO reading) {
-        this.basicChargeAmount = calculateBaseCharge(reading);
+        this.basicChargeAmount = enrichReading(reading).baseCharge;
     }
 
-    private double calculateBaseCharge(ReadingDTO reading) {
-        return baseRate(reading.month, reading.year) * reading.quantity;
-    }
 
-    private double baseRate(Month month, Year year) {
-        return 10;
-    }
 
     public double getBasicChargeAmount() {
         return basicChargeAmount;
