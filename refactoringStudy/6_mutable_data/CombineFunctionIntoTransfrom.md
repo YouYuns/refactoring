@@ -13,110 +13,104 @@
   를 사용해서 불변 데이터의 필드로 생성해 두고 재사용할 수도 있다.
 ---
 ### ✅ 절차
-1. 변환할 레코드를 입력받아서 값을 그대로 반환하는 변환 함수를 만든다.
-   - 이 작업은 대체로 깊은 복사로 처리해야 한다. 변환 함수가 원본 레코드를 바꾸지 않는지 검사하는 테스트를 마련해두면 도움될 때가 많다.
-2. 묶을 함수 중 함수 하나를 골라서 본문 코드를 변환 함수로 옮기고, 처리 결과를 레코드에 새 필드로 기록한다.<br>
-   그런 다음 클라이언트 코드가 이 필드를 사용하도록 수정한다.
-    - 로직이 복잡하면 함수 추출하기부터 한다.
+1. 변수가 사용되기 전에 값이 확실히 결정되는지, 변수를 사용할 때마다 계란 로직이 매번 다른 결과를 내지는 않는지 확인한다.
+2. 읽기전용으로 만들 수 있는 변수는 읽기전용으로 만든다.
 3. 테스트
-4. 나머지 관련 함수도 위 과정에 따라 처리한다.
+4. 변수 대입문을 함수로 추출한다.
+   - 변수와 함수가 같은 이름을 가질 수 없다면 함수 이름을 임시로 짓는다.<br>
+     또한, 추출한 함수가 부수효과를 일으키는지는 않는지 확인한다.<br>
+     부수효과가 있다면 질의 함수와 변경 함수 분리하기로 대처한다.
+5. 테스트
+6. 변수 인라인하기로 임시 변수를 제거한다.
 ---
 ### ✅ 예시
-✔️매달 사용자가 마신 차의 양을 측정Reading 하는 코드
+✔️간단한 주문 클래스를 준비
 ```java
-public class ReadingDTO {
-    String customer;
-    double quantity;
-    Month month;
-    Year year;
-}
+public class Order {
+  Double quantity;
+  Item item;
 
-//세금을 부과할 소비량을 계산하는 코드
-public class Client1 {
+  public Order(Double quantity, Item item) {
+    this.quantity = quantity;
+    this.item = item;
+  }
 
-    double baseCharge;
+  public Double getPrice(){
+    Double basePrice = this.quantity * this.item.price;
+    Double discountFactor = 0.98d;
 
-    public Client1(ReadingDTO dto) {
-        this.baseCharge = baseRate(dto.month, dto.year) * dto.quantity;
-    }
-
-    private double baseRate(Month month, Year year) {
-        return 10;
-    }
-
-    public double getBaseCharge() {
-        return baseCharge;
-    }
+    if(basePrice > 1000) discountFactor -= 0.03;
+    return basePrice * discountFactor;
+  }
 }
 ```
-⏬ 코드에는 이와 같은 계산 코드가 여러 곳에 반복된다
+⏬ 임시 변수인 basePrice와 discountFacotr를 메서드로 바꾼다
+⏬ 먼저 basePrice에 final을 붙여 읽기전용으로 만들고 테스트
 ```java
-public class ReadingDTO {
-    public class Client2 {
+public class Order {
+  Double quantity;
+  Item item;
 
-        private double base;
-        private double taxableCharge;
+  public Order(Double quantity, Item item) {
+    this.quantity = quantity;
+    this.item = item;
+  }
 
-        public Client2(ReadingDTO reading) {
-            this.base = baseRate(reading.month, reading.year) * reading.quantity;
-            this.taxableCharge = Math.max(0, this.base - taxThreshold(reading.year));
-        }
+  public Double getPrice(){
+    final  Double basePrice = this.quantity * this.item.price;
+    Double discountFactor = 0.98d;
 
-        private double taxThreshold(Year year) {
-            return 5;
-        }
-
-        private double baseRate(Month month, Year year) {
-            return 10;
-        }
-
-        public double getBase() {
-            return base;
-        }
-
-        public double getTaxableCharge() {
-            return taxableCharge;
-        }
-    }
+    if(basePrice > 1000) discountFactor -= 0.03;
+    return basePrice * discountFactor;
+  }
 }
 ```
-⏬ 중복 코드라면 함수추출하기로 처리할 수도 있지만 추출한 함수들이 프로그램 곳곳에 흩어져서 나중에 그런 함수가<br>
-있는지 조차 모르게 될 가능성이 있다.
+⏬ 대입문의 우변을 게터로 추출한다. 그리고 변수 인라인
 
 ```java
-public class Client3 {
+public class Order {
+  Double quantity;
+  Item item;
 
-    private double basicChargeAmount;
+  public Order(Double quantity, Item item) {
+    this.quantity = quantity;
+    this.item = item;
+  }
 
-    public Client3(ReadingDTO reading) {
-        this.basicChargeAmount = calculateBaseCharge(reading);
-    }
-    //아래처럼 만들어 놓고 까먹을수 이따 메서드를
-    private double calculateBaseCharge(ReadingDTO reading) {
-        return baseRate(reading.month, reading.year) * reading.quantity;
-    }
+  public Double getPrice(){
+    final  Double basePrice = getBasePrice();
+    Double discountFactor = 0.98d;
 
-    private double baseRate(Month month, Year year) {
-        return 10;
-    }
-    public double getBasicChargeAmount() {
-        return basicChargeAmount;
-    }
+    if(getBasePrice() > 1000) discountFactor -= 0.03;
+    return getBasePrice() * discountFactor;
+  }
+  public Double getBasePrice(){
+      return this.quantity * this.item.price;
+  }
 }
 ```
-⏬ 이거를 해결하는 방법으로 다양한 파생 정보 계산 로직을 모두 하나의 변환 단계로 모을 수 있다
+⏬ discountFactor도 같은 방식으로 한다
 ```java
-public class Client3 extends ReadingClient {
+public class Order {
+  Double quantity;
+  Item item;
 
-    private double basicChargeAmount;
+  public Order(Double quantity, Item item) {
+    this.quantity = quantity;
+    this.item = item;
+  }
 
-    public Client3(ReadingDTO reading) {
-        this.basicChargeAmount = enrichReading(reading).baseCharge;
-    }
-
-    public double getBasicChargeAmount() {
-        return basicChargeAmount;
-    }
+  public Double getPrice(){
+    return getBasePrice() * getDiscountFactor();
+  }
+  public Double getBasePrice(){
+    return this.quantity * this.item.price;
+  }
+  public Double getDiscountFactor(){
+    Double discountFactor = 0.98d;
+    if(getBasePrice() > 1000) discountFactor -= 0.03;
+      return discountFactor;
+  }
 }
 ```
 ---
